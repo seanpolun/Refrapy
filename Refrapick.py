@@ -19,15 +19,38 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+
+def get_curr_screen_geometry():
+    """
+        Workaround to get the size of the current screen in a multi-screen setup.
+
+        Returns:
+            geometry (str): The standard Tk geometry string.
+                [width]x[height]+[left]+[top]
+    """
+    root = Tk()
+    root.update_idletasks()
+    root.attributes('-fullscreen', True)
+    root.state('iconic')
+    geometry = root.winfo_geometry()
+    root.destroy()
+    return geometry
+
+
 class Refrapick(Tk):
     
     def __init__(self):
         
         super().__init__()
-        self.geometry("1600x900")
+        # self.geometry("1600x900")
+        # self.attributes('-fullscreen', True)
+        self.state('zoomed')
         self.title('Refrapy - Refrapick v2.0.0')
         self.configure(bg = "#F0F0F0")
+        # self.resizable(0,0)
         self.resizable(0,0)
+        self.win_width = self.winfo_width()
+        self.win_height = self.winfo_height()
 
         frame_toolbar = Frame(self)
         frame_toolbar.grid(row=0,column=0,sticky="WE")
@@ -233,6 +256,8 @@ class Refrapick(Tk):
         bl = Balloon(self)
         bl.bind(bt,"Help")
 
+        self.bind("<Configure>", self.on_window_resize)
+
         self.protocol("WM_DELETE_WINDOW", self.kill)
         self.initiateVariables()
         
@@ -288,6 +313,14 @@ class Refrapick(Tk):
         self.traveltimesColor = "g"
         self.traveltimesStyle = "--"
         self.pickSize = 100
+        self.dpi = plt.rcParams['figure.dpi']
+
+    def on_window_resize(self, event):
+        if event.widget == self:
+            if self.win_width != event.width or self.win_height != event.height:
+                self.win_width = event.width
+                self.win_height = event.height
+                # print(f"Window resized to {self.win_width} x {self.win_height}")
 
     def kill(self):
 
@@ -890,8 +923,19 @@ class Refrapick(Tk):
                     self.originalSamplingRates.append(int(st[0].stats['sampling_rate']))
                         
                     frame = Frame(self)
+                    # frame.pack()
                     frame.grid(row = 1, column = 0, sticky = "WE")
-                    fig = plt.figure(figsize = (15.9,8.1))
+
+                    # dpi = 60
+                    dpi = self.dpi  # Should be 100 because that is the default for matplotlib
+                    # self.screenwidth = self.winfo_width()
+                    # self.screenheight = self.winfo_height()
+                    pix_wid = self.win_width - (2*dpi) # 200 leaves an inch on either side at 100 dpi
+                    pix_hei = self.win_height - (2*dpi)
+                    print(pix_wid)
+                    print(pix_hei)
+                    # fig = plt.figure(figsize = (15.9,8.1))
+                    fig = plt.figure(figsize = (pix_wid/dpi,pix_hei/dpi))
                     canvas = FigureCanvasTkAgg(fig, frame)
                     canvas.draw()
                     toolbar = NavigationToolbar2Tk(canvas, frame)
@@ -1547,8 +1591,12 @@ E-mail: vjs279@hotmail.com
                         pickFile = filedialog.asksaveasfilename(title='Save',initialdir = self.projPath+"/picks/",filetypes=[('Pick file', '*.sgt')])
 
                         if pickFile:
+                            if path.splitext(pickFile)[1] == ".sgt":
+                                appd = ''
+                            else:
+                                appd = ".sgt"
 
-                            with open(pickFile+".sgt", "w") as outFile:
+                            with open(pickFile+appd, "w") as outFile:
 
                                 outFile.write("%d # shot/geophone points\n#x y\n"%(len(sgx)))
                                 
@@ -1582,8 +1630,11 @@ E-mail: vjs279@hotmail.com
                     pickFile = filedialog.asksaveasfilename(title='Save',initialdir = self.projPath+"/picks/",filetypes=[('Pick file', '*.sgt')])
 
                     if pickFile:
-                        
-                        with open(pickFile+".sgt", "w") as outFile:
+                        if path.splitext(pickFile)[1] == ".sgt":
+                            appd = ''
+                        else:
+                            appd = ".sgt"
+                        with open(pickFile+appd, "w") as outFile:
 
                             outFile.write("%d # shot/geophone points\n"%(len(sgx)))
                             outFile.write("#x y\n")
