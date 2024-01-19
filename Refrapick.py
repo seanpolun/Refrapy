@@ -932,8 +932,8 @@ class Refrapick(Tk):
                     # self.screenheight = self.winfo_height()
                     pix_wid = self.win_width - (2*dpi) # 200 leaves an inch on either side at 100 dpi
                     pix_hei = self.win_height - (2*dpi)
-                    print(pix_wid)
-                    print(pix_hei)
+                    # print(pix_wid)
+                    # print(pix_hei)
                     # fig = plt.figure(figsize = (15.9,8.1))
                     fig = plt.figure(figsize = (pix_wid/dpi,pix_hei/dpi))
                     canvas = FigureCanvasTkAgg(fig, frame)
