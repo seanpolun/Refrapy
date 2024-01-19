@@ -28,11 +28,14 @@ class Refrainv(Tk):
     def __init__(self):
         
         super().__init__()
-        self.geometry("1600x900")
+        # self.geometry("1600x900")
+        self.state('zoomed')
         self.title('Refrapy - Refrainv v2.0.0')
         self.configure(bg = "#F0F0F0")
         # self.resizable(0,0)
-        self.resizable(1,1)
+        self.resizable(0,0)
+        self.win_width = self.winfo_width()
+        self.win_height = self.winfo_height()
         self.iconbitmap("%s/images/ico_refrapy.ico"%getcwd())
 
         frame_toolbar = Frame(self)
@@ -156,6 +159,8 @@ class Refrainv(Tk):
         bl = Balloon(self)
         bl.bind(bt,"Help")
 
+        self.bind("<Configure>", self.on_window_resize)
+
         self.protocol("WM_DELETE_WINDOW", self.kill)
         self.initiateVariables()
 
@@ -247,6 +252,14 @@ E-mail: vjs279@hotmail.com
         self.timeterms_3d_ready = False
         self.showMerged = False
         self.z2elev = False
+        self.dpi = plt.rcParams['figure.dpi']
+
+    def on_window_resize(self, event):
+        if event.widget == self:
+            if self.win_width != event.width or self.win_height != event.height:
+                self.win_width = event.width
+                self.win_height = event.height
+                print(f"Window resized to {self.win_width} x {self.win_height}")
     
     def kill(self):
 
@@ -322,9 +335,16 @@ E-mail: vjs279@hotmail.com
         self.frame_plots = Frame(self, bg = "white")
         self.frame_plots.grid(row = 1, column = 0, sticky = "NSWE")
 
+        # Pick data (raw travel times)
+        # Size Observed data plot appropriately (let's do 1/2 of the window, with pad)
+        fig_data_wid = (self.win_width/2 + (self.dpi)) / self.dpi
+        fig_data_hei = (self.win_height - self.dpi)/ self.dpi
+        print(fig_data_hei, fig_data_wid)
+
         self.frame_data = Frame(self.frame_plots)
         self.frame_data.grid(row = 0, column = 0, sticky = "W", rowspan = 2)
-        self.fig_data = plt.figure(figsize = (6,8.1))
+        # self.fig_data = plt.figure(figsize = (6,8.1))
+        self.fig_data = plt.figure(figsize = (fig_data_wid,fig_data_hei))
         canvas_data = FigureCanvasTkAgg(self.fig_data, self.frame_data)
         canvas_data.draw()
         toolbar_data = NavigationToolbar2Tk(canvas_data, self.frame_data)
@@ -342,10 +362,13 @@ E-mail: vjs279@hotmail.com
         self.ax_data.spines['top'].set_visible(False)
         self.ax_data.yaxis.set_ticks_position('left')
         self.ax_data.xaxis.set_ticks_position('bottom')
-        
+        # Time Term Results
+        right_fig_wid = (self.win_width/self.dpi) - fig_data_wid
+        right_fig_hei = ((self.win_height/2) - self.dpi) / self.dpi
         self.frame_timeterms = Frame(self.frame_plots)
         self.frame_timeterms.grid(row = 0, column = 1, sticky = "NSWE")
-        self.fig_timeterms = plt.figure(figsize = (9.5,3.7))
+        # self.fig_timeterms = plt.figure(figsize = (9.5,3.7))
+        self.fig_timeterms = plt.figure(figsize = (right_fig_wid,right_fig_hei))
         canvas_timeterms = FigureCanvasTkAgg(self.fig_timeterms, self.frame_timeterms)
         canvas_timeterms.draw()
         toolbar_timeterms = NavigationToolbar2Tk(canvas_timeterms, self.frame_timeterms)
@@ -366,9 +389,11 @@ E-mail: vjs279@hotmail.com
         self.ax_timeterms.yaxis.set_ticks_position('left')
         self.ax_timeterms.xaxis.set_ticks_position('bottom')
 
+        # Tomography plot
         self.frame_tomography = Frame(self.frame_plots)
         self.frame_tomography.grid(row = 1, column = 1, sticky = "NSWE")
-        self.fig_tomography = plt.figure(figsize = (9.5,3.7))
+        self.fig_tomography = plt.figure(figsize = (right_fig_wid,right_fig_hei))
+        # self.fig_tomography = plt.figure(figsize = (9.5,3.7))
         canvas_tomography = FigureCanvasTkAgg(self.fig_tomography, self.frame_tomography)
         canvas_tomography.draw()
         toolbar_tomography = NavigationToolbar2Tk(canvas_tomography, self.frame_tomography)
