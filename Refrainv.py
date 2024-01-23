@@ -2,6 +2,7 @@
 ##Refrainv - Data inversion
 ##Author: Victor Guedes, MSc
 ##E-mail: vjs279@hotmail.com
+import os.path
 
 from matplotlib import pyplot as plt
 from matplotlib.path import Path
@@ -11,7 +12,7 @@ from matplotlib.lines import Line2D
 from matplotlib.colors import is_color_like
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from tkinter import Tk, Toplevel, Frame, Button, Label, filedialog, messagebox, PhotoImage, simpledialog, Entry
+from tkinter import Tk, Toplevel, Frame, Button, Label, filedialog, messagebox, PhotoImage, simpledialog, Entry, Menu
 from os import path, makedirs, getcwd
 from obspy import read
 from obspy.signal.filter import lowpass, highpass
@@ -163,6 +164,15 @@ class Refrainv(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.kill)
         self.initiateVariables()
+
+        menubar = Menu(frame_toolbar)
+        time_terms_menu = Menu(menubar, tearoff=0)
+        time_terms_menu.add_command(label="Save time-terms", command=self.save_picks)
+        time_terms_menu.add_command(label="Load data", command=self.load_time_terms)
+        time_terms_menu.add_command(label="Run Time-Terms Inversion", command=self.runTimeTerms)
+        menubar.add_cascade(label="Time-Terms", menu=time_terms_menu)
+
+        self.config(menu=menubar)
 
     def help(self):
 
@@ -893,7 +903,86 @@ E-mail: vjs279@hotmail.com
                 self.statusLabel.configure(text = 'Layer interpratation disabled')
                 messagebox.showinfo('Refrainv','Layer interpretation disabled!')
                 self.layerInterpretationMode = False
-    
+
+    def save_picks(self):
+        if self.projReady:
+            if os.path.exists(os.path.join(self.projPath, "models", "time_picks")) is not True:
+                os.makedirs(os.path.join(self.projPath, "models", "time_picks"))
+            pick_file = filedialog.asksaveasfilename(title='Choose Base Filename', initialdir=self.projPath +
+                                                     "/models/time_picks/")
+            pick_file_noext = os.path.splitext(pick_file)[0]
+            output_message = ""
+            if self.layer1:
+                with open(pick_file_noext + "_layer_1.txt", "w") as file:
+                    file.write("bx bt arts arts-bx iS iG\n")
+                    for i in self.layer1:
+                        file.write("{0} {1} {2} {3} {4} {5}\n".format(i[0], i[1], i[2], i[3], i[4], i[5]))
+                output_message += "Layer 1 picks saved!\n"
+
+            if self.layer2:
+                with open(pick_file_noext + "_layer_2.txt", "w") as file:
+                    file.write("bx bt arts arts-bx iS iG\n")
+                    for i in self.layer2:
+                        file.write("{0} {1} {2} {3} {4} {5}\n".format(i[0], i[1], i[2], i[3], i[4], i[5]))
+                output_message += "Layer 2 picks saved!\n"
+
+            if self.layer3:
+                with open(pick_file_noext + "_layer_3.txt", "w") as file:
+                    file.write("bx bt arts arts-bx iS iG\n")
+                    for i in self.layer3:
+                        file.write("{0} {1} {2} {3} {4} {5}\n".format(i[0], i[1], i[2], i[3], i[4], i[5]))
+                output_message += "Layer 3 picks saved!\n"
+            messagebox.showinfo("Refrainv", output_message)
+
+    def load_time_terms(self):
+        if self.projReady:
+            pick_files = filedialog.askopenfilenames(title='Choose Pick Files', initialdir=self.projPath +
+                                                   "/models/time_picks/")
+            if pick_files:
+                for pick_file in pick_files:
+                    with open(pick_file, "r") as file:
+                        lines = file.readlines()
+                        layer = os.path.splitext(os.path.basename(pick_file))[0].split("_")[-1]
+                        if layer == "layer":
+                            layer = 1
+                        else:
+                            layer = int(layer)
+                        for line in lines[1:]:
+                            line = line.split()
+                            bx = float(line[0])
+                            bt = float(line[1])
+                            arts = float(line[2])
+                            arts_bx = float(line[3])
+                            iS = int(line[4])
+                            iG = int(line[5])
+                            append_tup = (bx, bt, arts, arts_bx, iS, iG)
+                            if layer == 1:
+                                self.layer1.append(append_tup)
+                            elif layer == 2:
+                                self.layer2.append(append_tup)
+                            elif layer == 3:
+                                self.layer3.append(append_tup)
+                self.draw_time_terms_picks()
+                messagebox.showinfo("Refrainv", "Picks loaded!")
+
+    def draw_time_terms_picks(self):
+        for row in self.layer1:
+            # unpack row
+            bx, bt, arts, arts_bx, iS, iG = row
+            artist = self.dataArts[iS][int(arts)][iG]
+            artist.set_color(self.layer1_color)
+        for row in self.layer2:
+            # unpack row
+            bx, bt, arts, arts_bx, iS, iG = row
+            artist = self.dataArts[iS][int(arts)][iG]
+            artist.set_color(self.layer2_color)
+        for row in self.layer3:
+            # unpack row
+            bx, bt, arts, arts_bx, iS, iG = row
+            artist = self.dataArts[iS][int(arts)][iG]
+            artist.set_color(self.layer3_color)
+        self.fig_data.canvas.draw()
+
     def clearTomoPlot(self):
 
         self.fig_tomography.clf()
