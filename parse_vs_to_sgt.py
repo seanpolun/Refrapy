@@ -1,7 +1,6 @@
 # parse_vs_to_sgt.py : Parse a .vs file from plotrefa to the .sgt format preferred by pygimli
 # (c) 2024 Sean G. Polun
 
-import os
 import sys
 import math
 
