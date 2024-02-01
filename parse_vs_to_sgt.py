@@ -9,7 +9,10 @@ import math
 def parse_vs_to_sgt(vs_file, sgt_file, first_shot, last_shot, first_geophone, last_geophone, shot_spacing):
     """
     parse_vs_to_sgt.py:
-    Parse a .vs file from plotrefa to the .sgt format preferred by pygimli
+    Parse a .vs file with pick information from Geometrics to the .sgt format preferred by pygimli.
+    Does not support .vs files with layer information from plotrefa.
+    (c) 2024 Sean G. Polun
+
     Args:
         vs_file: Path to the .vs file
         sgt_file: Path to the .sgt file
