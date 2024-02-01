@@ -53,7 +53,7 @@ def parse_vs_to_sgt(vs_file, sgt_file, first_shot, last_shot, first_geophone, la
                 continue
             if int(line_split[2]) == 1:
                 geophone_loc = float(line_split[0])
-                geophone_num = int((geophone_loc - first_geophone) / phone_spacing)
+                geophone_num = int((geophone_loc - first_geophone) / phone_spacing) + 1
                 time_ms = float(line_split[1])
                 time_s = time_ms / 1000
                 if geophone_loc < first_geophone or geophone_loc > last_geophone:
@@ -70,7 +70,7 @@ def parse_vs_to_sgt(vs_file, sgt_file, first_shot, last_shot, first_geophone, la
     trail_shots = int(math.ceil((last_shot - last_geophone) / shot_spacing))
     num_stations = num_geophones + lead_shots + trail_shots
     station_lines.append("{0} # shot/geophone points\n".format(num_stations))
-    station_lines.append("x y\n")
+    station_lines.append("#x y\n")
     x = 0.0
     y = 0.0
     trl = trail_shots - 1
@@ -92,7 +92,7 @@ def parse_vs_to_sgt(vs_file, sgt_file, first_shot, last_shot, first_geophone, la
     print("Writing to file")
     output = station_lines
     output.append("{0} # measurements\n".format(num_obs))
-    output.append("# s g t\n")
+    output.append("#s g t\n")
     output.extend(sgt_obs)
     with open(sgt_file, 'w') as sgt:
         sgt.writelines(output)
